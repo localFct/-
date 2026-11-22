@@ -28,12 +28,31 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build debug APK
-        run: gradle --no-daemon :app:assembleDebug
+      - name: Prepare persistent app signing key
+        env:
+          ECHO_KEYSTORE_BASE64: ${{ secrets.ECHO_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ECHO_KEYSTORE_BASE64" ]; then
+            echo "Missing GitHub Actions secret: ECHO_KEYSTORE_BASE64"
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/echo-signing"
+          printf '%s' "$ECHO_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/echo-signing/echo-upload.jks"
+          echo "ECHO_KEYSTORE_PATH=$RUNNER_TEMP/echo-signing/echo-upload.jks" >> "$GITHUB_ENV"
+
+      - name: Build signed update APK
+        env:
+          ECHO_KEYSTORE_PASSWORD: ${{ secrets.ECHO_KEYSTORE_PASSWORD }}
+          ECHO_KEY_ALIAS: ${{ secrets.ECHO_KEY_ALIAS }}
+          ECHO_KEY_PASSWORD: ${{ secrets.ECHO_KEY_PASSWORD }}
+          VERSION_CODE: ${{ github.run_number }}
+          VERSION_NAME: 0.2.${{ github.run_number }}
+        run: |
+          gradle --no-daemon :app:assembleRelease -PversionCode="$VERSION_CODE" -PversionName="$VERSION_NAME"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ECHO-debug-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: ECHO-Android-Update-APK
+          path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
