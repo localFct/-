@@ -6,12 +6,28 @@ android {
     namespace 'com.echo.beyond'
     compileSdk 35
 
+    signingConfigs {
+        echoUpdate {
+            storeFile file(System.getenv('ECHO_KEYSTORE_PATH'))
+            storePassword System.getenv('ECHO_KEYSTORE_PASSWORD')
+            keyAlias System.getenv('ECHO_KEY_ALIAS')
+            keyPassword System.getenv('ECHO_KEY_PASSWORD')
+        }
+    }
+
     defaultConfig {
         applicationId 'com.echo.beyond'
         minSdk 26
         targetSdk 35
-        versionCode 1
-        versionName '0.1.0'
+        versionCode (project.findProperty('versionCode') ?: '2').toInteger()
+        versionName project.findProperty('versionName') ?: '0.2.0'
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.echoUpdate
+            minifyEnabled false
+        }
     }
 
     compileOptions {
