@@ -300,7 +300,7 @@ with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
             z.write(p, p.relative_to(OUT).as_posix())
 print(f"Repacked {archive}; added {len(MOB_PALETTES)} mob texture sheets and {len(armor_palettes)*2} armor atlas images.")
 
-// Validate the generated pack before publishing the .mcpack artifact.
+# Validate the generated pack before publishing the .mcpack artifact.
 def validate_pack():
     manifest_path = OUT / "manifest.json"
     terrain_path = OUT / "textures" / "terrain_texture.json"
@@ -343,7 +343,8 @@ def validate_pack():
         for required in ("manifest.json", "pack_icon.png", "textures/terrain_texture.json", "textures/item_texture.json"):
             if required not in names:
                 raise ValueError(f".mcpack is missing required entry: {required}")
-        if len(names) != len(list(OUT.rglob("*"))):
+        expected_names = {p.relative_to(OUT).as_posix() for p in OUT.rglob("*") if p.is_file()}
+        if names != expected_names:
             raise ValueError("Archive contents do not match generated pack files")
 
     print(
