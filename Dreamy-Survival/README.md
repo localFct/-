@@ -1,16 +1,19 @@
 # Dreamy Survival 🌿
 
-Cozy Vanilla+ / cottagecore resource pack for Minecraft Bedrock on Android.
+Cozy Vanilla+ / cottagecore resource-pack starter for Minecraft Bedrock on Android.
 
-## Included in this first texture batch
-A custom 16×16 pixel-art generator creates soft, readable textures for grass, dirt, stone, cobblestone, mossy cobblestone, wood planks and logs, leaves, sand, sandstone, gravel, bricks, glass, clay, snow, wool, terracotta, obsidian, and common ores.
+## Generated texture batches
+- **Blocks (28):** grass, dirt, stone, cobblestone, mossy cobblestone, wood, leaves, sand, sandstone, gravel, bricks, glass, clay, snow, ores, wool, terracotta, obsidian.
+- **Nature (40+):** flower sprites, tall-flower accents, saplings, azalea, mushrooms, fungi, and crop growth-stage sprites.
+- **Items (14):** apples, golden apples, bread, carrots, potatoes, beetroot, berries, honey bottle, gems, ingots, coal, and sticks.
+- Custom pack icon and automated `.mcpack` build.
 
-## Build the .mcpack
+## Build
 1. Open the repository's **Actions** tab.
 2. Select **Build Dreamy Survival Bedrock Pack**.
 3. Press **Run workflow**.
-4. When it finishes, open the run and download the **Dreamy-Survival-mcpack** artifact.
-5. On Android, open the downloaded `.mcpack` file with Minecraft, then activate it under Settings → Global Resources or the world's Resource Packs.
+4. Download the **Dreamy-Survival-mcpack** artifact from the completed run.
+5. On Android, open the downloaded `.mcpack` with Minecraft and activate it in the world's Resource Packs.
 
-## Important
-This is the first custom texture batch, not a complete replacement of every vanilla texture yet. It does not modify the existing Android game. More blocks, plants, items, and mobs can be added in later batches. Please test the pack in Minecraft Bedrock 26.62 before using it in a long-term world.
+## Compatibility note
+This is an expanding custom texture collection, not yet a complete replacement of every vanilla texture. Bedrock's internal texture naming and atlas behavior can vary by game version; test in Minecraft Bedrock 26.62 and report any missing or unchanged textures. The existing Android game project is kept untouched.
