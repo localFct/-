@@ -1,0 +1,29 @@
+name: Build Dreamy Survival Bedrock Pack
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "Dreamy-Survival/**"
+      - ".github/workflows/dreamy-survival.yml"
+
+jobs:
+  build-pack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Pillow
+        run: python -m pip install pillow
+      - name: Generate textures and mcpack
+        run: python Dreamy-Survival/generate_pack.py
+      - name: Upload Bedrock pack
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dreamy-Survival-mcpack
+          path: Dreamy-Survival/build/Dreamy-Survival.mcpack
+          if-no-files-found: error
