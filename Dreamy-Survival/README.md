@@ -3,7 +3,7 @@
 Cozy Vanilla+ / cottagecore resource-pack starter for Minecraft Bedrock on Android.
 
 ## Generated texture batches
-- **Blocks (28):** grass, dirt, stone, cobblestone, mossy cobblestone, wood, leaves, sand, sandstone, gravel, bricks, glass, clay, snow, ores, wool, terracotta, obsidian.
+- **Blocks (30):** grass, dirt, stone, cobblestone, mossy cobblestone, wood, leaves, sand, sandstone, gravel, bricks, glass, clay, snow, ores, wool, terracotta, obsidian.
 - **Nature (50):** flower sprites, tall-flower accents, saplings, azalea, mushrooms, fungi, and crop growth-stage sprites.
 - **Items (14):** apples, golden apples, bread, carrots, potatoes, beetroot, berries, honey bottle, gems, ingots, coal, and sticks.
 - **Mobs (12):** soft starter texture sheets for cow, sheep, pig, chicken, wolf, cat, fox, bee, horse, rabbit, turtle, and blue axolotl.
