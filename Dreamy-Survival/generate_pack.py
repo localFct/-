@@ -250,7 +250,9 @@ for index,(name,(base,light,shade)) in enumerate(MOB_PALETTES.items()):
     # Quiet, readable mottling; keep the vanilla atlas silhouette and dimensions.
     for x,y in ((5,5),(14,10),(25,4),(38,12),(51,7),(58,22),(19,25),(44,27)):
         d.point((x,y),fill=light)
-    im.save(ENTITY_DIR/(name+".png"), optimize=True)
+    target = ENTITY_DIR/(name+".png")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    im.save(target, optimize=True)
 
 # Armor atlas starter textures. Pastel metal tones, with restrained engraved highlights.
 armor_palettes = {
