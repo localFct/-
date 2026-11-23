@@ -299,3 +299,58 @@ with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
         if p.is_file():
             z.write(p, p.relative_to(OUT).as_posix())
 print(f"Repacked {archive}; added {len(MOB_PALETTES)} mob texture sheets and {len(armor_palettes)*2} armor atlas images.")
+
+// Validate the generated pack before publishing the .mcpack artifact.
+def validate_pack():
+    manifest_path = OUT / "manifest.json"
+    terrain_path = OUT / "textures" / "terrain_texture.json"
+    items_path = OUT / "textures" / "item_texture.json"
+    for required in (manifest_path, terrain_path, items_path, OUT / "pack_icon.png"):
+        if not required.is_file():
+            raise FileNotFoundError(f"Required pack file is missing: {required.relative_to(OUT)}")
+
+    manifest_data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    terrain_data = json.loads(terrain_path.read_text(encoding="utf-8"))
+    items_data = json.loads(items_path.read_text(encoding="utf-8"))
+    if manifest_data.get("format_version") != 2 or not manifest_data.get("header", {}).get("uuid"):
+        raise ValueError("manifest.json is missing a valid resource-pack header")
+    for atlas_name, atlas_data, folder in (
+        ("terrain", terrain_data, "blocks"),
+        ("items", items_data, "items"),
+    ):
+        entries = atlas_data.get("texture_data", {})
+        if not entries:
+            raise ValueError(f"{atlas_name} texture atlas is empty")
+        for key, entry in entries.items():
+            texture = entry.get("textures")
+            paths = texture if isinstance(texture, list) else [texture]
+            for texture_path in paths:
+                if not isinstance(texture_path, str) or not (OUT / f"{texture_path}.png").is_file():
+                    raise FileNotFoundError(f"Atlas entry {key!r} points to missing texture: {texture_path!r}")
+
+    png_files = list(OUT.rglob("*.png"))
+    if not png_files:
+        raise ValueError("No PNG textures were generated")
+    for png in png_files:
+        with Image.open(png) as image:
+            image.verify()
+
+    with zipfile.ZipFile(archive, "r") as z:
+        bad_member = z.testzip()
+        if bad_member:
+            raise ValueError(f"Corrupt file in .mcpack archive: {bad_member}")
+        names = set(z.namelist())
+        for required in ("manifest.json", "pack_icon.png", "textures/terrain_texture.json", "textures/item_texture.json"):
+            if required not in names:
+                raise ValueError(f".mcpack is missing required entry: {required}")
+        if len(names) != len(list(OUT.rglob("*"))):
+            raise ValueError("Archive contents do not match generated pack files")
+
+    print(
+        f"Validated .mcpack: {len(png_files)} PNG files, "
+        f"{len(terrain_data['texture_data'])} terrain entries, "
+        f"{len(items_data['texture_data'])} item entries."
+    )
+
+
+validate_pack()
