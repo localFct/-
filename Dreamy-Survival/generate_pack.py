@@ -219,3 +219,77 @@ with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
     for p in OUT.rglob("*"):
         if p.is_file(): z.write(p, p.relative_to(OUT).as_posix())
 print(f"Created {archive} with {len(PALETTES)} block textures")
+
+
+# Third batch: soft mob palettes and armor atlases, plus Bedrock texture atlases.
+# These are starter overrides; exact entity UVs can differ by mob/version, so verify in-game.
+ENTITY_DIR = OUT / "textures" / "entity"
+ARMOR_DIR = OUT / "textures" / "models" / "armor"
+ENTITY_DIR.mkdir(parents=True, exist_ok=True)
+ARMOR_DIR.mkdir(parents=True, exist_ok=True)
+
+MOB_PALETTES = {
+    "cow/cow": ((116,91,76,255),(235,222,194,255),(87,67,58,255)),
+    "sheep/sheep": ((224,218,197,255),(194,210,178,255),(246,238,218,255)),
+    "pig/pig": ((221,160,157,255),(244,194,185,255),(180,112,119,255)),
+    "chicken": ((239,230,203,255),(215,180,112,255),(192,111,91,255)),
+    "wolf/wolf": ((157,160,146,255),(195,191,166,255),(104,119,111,255)),
+    "cat/ocelot": ((205,164,105,255),(239,218,169,255),(112,92,72,255)),
+    "fox/fox": ((205,125,79,255),(245,222,187,255),(105,81,69,255)),
+    "bee/bee": ((224,178,77,255),(246,225,155,255),(84,78,67,255)),
+}
+for index,(name,(base,light,shade)) in enumerate(MOB_PALETTES.items()):
+    rng = random.Random(7800+index)
+    im = Image.new("RGBA",(64,32),base)
+    px = im.load()
+    for y in range(32):
+        for x in range(64):
+            if rng.random() < 0.12: px[x,y] = light
+            elif rng.random() < 0.08: px[x,y] = shade
+    d = ImageDraw.Draw(im)
+    # Quiet, readable mottling; keep the vanilla atlas silhouette and dimensions.
+    for x,y in ((5,5),(14,10),(25,4),(38,12),(51,7),(58,22),(19,25),(44,27)):
+        d.point((x,y),fill=light)
+    im.save(ENTITY_DIR/(name+".png"), optimize=True)
+
+# Armor atlas starter textures. Pastel metal tones, with restrained engraved highlights.
+armor_palettes = {
+    "leather": ((151,112,83,255),(196,157,119,255),(105,83,69,255)),
+    "chainmail": ((153,169,160,255),(211,221,203,255),(104,124,119,255)),
+    "iron": ((177,187,176,255),(231,234,215,255),(126,144,139,255)),
+    "gold": ((207,171,83,255),(247,222,142,255),(151,119,61,255)),
+    "diamond": ((108,184,168,255),(187,229,208,255),(69,133,129,255)),
+    "netherite": ((105,96,105,255),(158,143,143,255),(68,66,78,255)),
+}
+for index,(material,(base,light,shade)) in enumerate(armor_palettes.items()):
+    for layer in ("1","2"):
+        im = Image.new("RGBA",(64,32),(0,0,0,0))
+        d = ImageDraw.Draw(im)
+        d.rectangle((1,1,62,30),fill=base)
+        for x in range(3,62,4):
+            d.line((x,2,x,29),fill=shade,width=1)
+        d.line((2,5,61,5),fill=light,width=1)
+        d.line((2,25,61,25),fill=shade,width=1)
+        for x,y in ((8,8),(16,18),(31,10),(47,18),(55,8)):
+            d.point((x,y),fill=light)
+        im.save(ARMOR_DIR/f"{material}_{layer}.png",optimize=True)
+
+# Register the generated block and item images in Bedrock atlases.
+terrain = {"resource_pack_name":"Dreamy Survival","texture_name":"atlas.terrain","padding":8,"num_mip_levels":4,"texture_data":{}}
+for p in sorted((OUT/"textures"/"blocks").glob("*.png")):
+    key = p.stem
+    terrain["texture_data"][key] = {"textures": f"textures/blocks/{key}"}
+(OUT/"textures"/"terrain_texture.json").write_text(json.dumps(terrain,indent=2),encoding="utf-8")
+
+items_atlas = {"resource_pack_name":"Dreamy Survival","texture_name":"atlas.items","texture_data":{}}
+for p in sorted((OUT/"textures"/"items").glob("*.png")):
+    key = p.stem
+    items_atlas["texture_data"][key] = {"textures": f"textures/items/{key}"}
+(OUT/"textures"/"item_texture.json").write_text(json.dumps(items_atlas,indent=2),encoding="utf-8")
+
+# Rebuild archive after all generated assets and atlas definitions have been written.
+with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
+    for p in OUT.rglob("*"):
+        if p.is_file():
+            z.write(p, p.relative_to(OUT).as_posix())
+print(f"Repacked {archive}; added {len(MOB_PALETTES)} mob texture sheets and {len(armor_palettes)*2} armor atlas images.")
