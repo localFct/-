@@ -2,20 +2,34 @@
   "format_version": 2,
   "header": {
     "name": "Dreamy Survival",
-    "description": "Cozy Vanilla+ Cottagecore resource pack — starter edition",
+    "description": "Cozy Vanilla+ Cottagecore resource pack — compatibility refresh",
     "uuid": "b7d5b18e-9c43-4f67-9a2e-1f0c6d8a42b1",
-    "version": [1, 0, 0],
-    "min_engine_version": [1, 21, 0]
+    "version": [
+      1,
+      0,
+      1
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      0
+    ]
   },
   "modules": [
     {
       "type": "resources",
       "uuid": "6a2f0e91-4d73-4c8b-a5f1-9e7d3b2c8146",
-      "version": [1, 0, 0]
+      "version": [
+        1,
+        0,
+        1
+      ]
     }
   ],
   "metadata": {
-    "authors": ["Dreamy Survival"],
+    "authors": [
+      "Dreamy Survival"
+    ],
     "license": "All Rights Reserved"
   }
 }
