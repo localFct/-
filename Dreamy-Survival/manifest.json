@@ -2,12 +2,12 @@
   "format_version": 2,
   "header": {
     "name": "Dreamy Survival",
-    "description": "Cozy Vanilla+ Cottagecore resource pack — compatibility refresh",
+    "description": "Cozy Vanilla+ Cottagecore resource pack — UV texture expansion",
     "uuid": "b7d5b18e-9c43-4f67-9a2e-1f0c6d8a42b1",
     "version": [
       1,
       0,
-      1
+      2
     ],
     "min_engine_version": [
       1,
@@ -22,7 +22,7 @@
       "version": [
         1,
         0,
-        1
+        2
       ]
     }
   ],

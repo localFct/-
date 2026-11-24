@@ -221,8 +221,9 @@ with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
 print(f"Created {archive} with {len(PALETTES)} block textures")
 
 
-# Third batch: soft mob palettes and armor atlases, plus Bedrock texture atlases.
-# These are starter overrides; exact entity UVs can differ by mob/version, so verify in-game.
+# Third batch: starter mob sheets, UV-mapped animal additions, and armor atlases.
+# Existing starter sheets are retained; new animal textures use the vanilla Bedrock paths
+# and model UV dimensions. Visual appearance still requires in-game verification.
 ENTITY_DIR = OUT / "textures" / "entity"
 ARMOR_DIR = OUT / "textures" / "models" / "armor"
 ENTITY_DIR.mkdir(parents=True, exist_ok=True)
@@ -251,14 +252,118 @@ for index,(name,(base,light,shade)) in enumerate(MOB_PALETTES.items()):
             if rng.random() < 0.12: px[x,y] = light
             elif rng.random() < 0.08: px[x,y] = shade
     d = ImageDraw.Draw(im)
-    # Quiet, readable mottling; keep the vanilla atlas silhouette and dimensions.
     for x,y in ((5,5),(14,10),(25,4),(38,12),(51,7),(58,22),(19,25),(44,27)):
         d.point((x,y),fill=light)
     target = ENTITY_DIR/(name+".png")
     target.parent.mkdir(parents=True, exist_ok=True)
     im.save(target, optimize=True)
 
-# Armor atlas starter textures. Pastel metal tones, with restrained engraved highlights.
+
+def draw_uv_box(im, uv, size, base, light, shade, back=None, seed=0):
+    """Paint a Bedrock cuboid's six faces in its standard 64x64 UV atlas."""
+    u,v = uv
+    x,y,z = size
+    d = ImageDraw.Draw(im)
+    back = back or shade
+    faces = [
+        ((u+z, v, u+z+x-1, v+z-1), light),
+        ((u+z+x, v, u+2*z+x-1, v+z-1), shade),
+        ((u, v+z, u+z-1, v+z+y-1), shade),
+        ((u+z, v+z, u+z+x-1, v+z+y-1), base),
+        ((u+z+x, v+z, u+2*z+x-1, v+z+y-1), shade),
+        ((u+2*z+x, v+z, u+2*z+2*x-1, v+z+y-1), back),
+    ]
+    for box,color in faces:
+        d.rectangle(box, fill=color)
+    rng = random.Random(9100 + u*1000 + v*17 + sum(size) + seed)
+    px = im.load()
+    for yy in range(max(0,v), min(im.height, v+z+y)):
+        for xx in range(max(0,u), min(im.width, u+2*z+2*x)):
+            if px[xx,yy][3] and rng.random() < 0.025:
+                c = px[xx,yy]
+                px[xx,yy] = (min(255,c[0]+4), min(255,c[1]+4), min(255,c[2]+4), c[3])
+
+
+# Cow: 64x64 UV atlas matching geometry.cow.v2; warm cream coat and quiet cocoa patches.
+cow = Image.new("RGBA",(64,64),(0,0,0,0))
+cow_cream = (229,219,198,255)
+cow_light = (244,235,216,255)
+cow_shade = (196,181,155,255)
+cow_spot = (137,111,85,255)
+cow_spot_light = (163,137,108,255)
+cow_spot_shade = (106,84,66,255)
+draw_uv_box(cow,(18,4),(12,18,10),cow_cream,cow_light,cow_shade)
+draw_uv_box(cow,(0,0),(8,8,6),cow_cream,cow_light,cow_shade)
+draw_uv_box(cow,(1,33),(6,3,1),(118,91,72,255),(153,122,95,255),(87,66,53,255))
+draw_uv_box(cow,(22,0),(1,3,1),cow_spot,cow_spot_light,cow_spot_shade)
+draw_uv_box(cow,(0,16),(4,12,4),cow_cream,cow_light,cow_shade)
+cd = ImageDraw.Draw(cow)
+cd.ellipse((29,17,34,22),fill=cow_spot)
+cd.ellipse((35,25,39,29),fill=cow_spot_light)
+cd.ellipse((19,19,24,25),fill=cow_spot)
+cd.ellipse((52,17,57,23),fill=cow_spot)
+cd.rectangle((8,8,9,9),fill=cow_spot)
+cd.rectangle((11,8,12,9),fill=cow_spot)
+cd.rectangle((3,11,4,12),fill=cow_spot_shade)
+cd.rectangle((4,29,7,31),fill=cow_spot_shade)
+(ENTITY_DIR/"cow").mkdir(parents=True,exist_ok=True)
+cow.save(ENTITY_DIR/"cow"/"cow_v2.png",optimize=True)
+
+
+# Panda: vanilla 64x64 UV layout; cream fur, charcoal limbs, and small readable eye patches.
+panda = Image.new("RGBA",(64,64),(0,0,0,0))
+panda_cream = (232,224,207,255)
+panda_light = (246,239,224,255)
+panda_shade = (199,190,173,255)
+panda_dark = (57,59,57,255)
+panda_dark_light = (82,84,79,255)
+panda_dark_shade = (39,42,42,255)
+draw_uv_box(panda,(0,25),(19,26,13),panda_cream,panda_light,panda_shade)
+draw_uv_box(panda,(0,6),(13,10,9),panda_cream,panda_light,panda_shade)
+draw_uv_box(panda,(45,16),(7,5,2),panda_dark,panda_dark_light,panda_dark_shade)
+draw_uv_box(panda,(52,25),(5,4,1),panda_dark,panda_dark_light,panda_dark_shade)
+draw_uv_box(panda,(40,0),(6,9,6),panda_dark,panda_dark_light,panda_dark_shade)
+pd = ImageDraw.Draw(panda)
+pd.ellipse((10,17,14,22),fill=panda_dark)
+pd.ellipse((17,17,21,22),fill=panda_dark)
+pd.point((12,19),fill=panda_light)
+pd.point((19,19),fill=panda_light)
+pd.rectangle((14,40,17,63),fill=panda_dark)
+pd.rectangle((28,40,31,63),fill=panda_dark)
+pd.rectangle((1,40,4,62),fill=panda_dark_shade)
+pd.rectangle((40,40,43,62),fill=panda_dark_shade)
+pd.rectangle((49,20,50,21),fill=(31,34,34,255))
+(ENTITY_DIR/"panda").mkdir(parents=True,exist_ok=True)
+panda.save(ENTITY_DIR/"panda"/"panda.png",optimize=True)
+
+
+# Goat: 64x64 UV layout; soft oat-coloured coat, darker hooves, and muted horn detail.
+goat = Image.new("RGBA",(64,64),(0,0,0,0))
+goat_wool = (213,199,171,255)
+goat_light = (237,226,203,255)
+goat_shade = (175,158,132,255)
+goat_leg = (176,153,119,255)
+goat_leg_light = (199,180,148,255)
+goat_leg_shade = (137,116,91,255)
+goat_horn = (104,83,65,255)
+goat_horn_light = (145,118,91,255)
+goat_horn_shade = (75,62,51,255)
+draw_uv_box(goat,(1,1),(9,11,16),goat_wool,goat_light,goat_shade)
+draw_uv_box(goat,(0,28),(11,14,11),goat_wool,goat_light,goat_shade)
+draw_uv_box(goat,(34,46),(5,7,10),goat_wool,goat_light,goat_shade)
+draw_uv_box(goat,(2,61),(3,2,1),goat_leg,goat_leg_light,goat_leg_shade)
+draw_uv_box(goat,(12,55),(2,7,2),goat_horn,goat_horn_light,goat_horn_shade)
+for uv,size in (((36,29),(3,6,3)),((49,29),(3,6,3)),((49,2),(3,10,3)),((35,2),(3,10,3))):
+    draw_uv_box(goat,uv,size,goat_leg,goat_leg_light,goat_leg_shade)
+gd = ImageDraw.Draw(goat)
+gd.point((46,60),fill=(122,92,78,255))
+for x,y in ((39,36),(52,36),(52,10),(38,10)):
+    gd.line((x,y,x+2,y),fill=goat_horn,width=1)
+(ENTITY_DIR/"goat").mkdir(parents=True,exist_ok=True)
+goat.save(ENTITY_DIR/"goat"/"goat.png",optimize=True)
+
+
+# Player armor: UV-aware 64x32 atlases with distinct material tones and restrained seams.
 armor_palettes = {
     "leather": ((151,112,83,255),(196,157,119,255),(105,83,69,255)),
     "chainmail": ((153,169,160,255),(211,221,203,255),(104,124,119,255)),
@@ -267,19 +372,83 @@ armor_palettes = {
     "diamond": ((108,184,168,255),(187,229,208,255),(69,133,129,255)),
     "netherite": ((105,96,105,255),(158,143,143,255),(68,66,78,255)),
 }
-for index,(material,(base,light,shade)) in enumerate(armor_palettes.items()):
-    for layer in ("1","2"):
-        im = Image.new("RGBA",(64,32),(0,0,0,0))
-        d = ImageDraw.Draw(im)
-        d.rectangle((1,1,62,30),fill=base)
-        for x in range(3,62,4):
-            d.line((x,2,x,29),fill=shade,width=1)
-        d.line((2,5,61,5),fill=light,width=1)
-        d.line((2,25,61,25),fill=shade,width=1)
-        for x,y in ((8,8),(16,18),(31,10),(47,18),(55,8)):
-            d.point((x,y),fill=light)
-        im.save(ARMOR_DIR/f"{material}_{layer}.png",optimize=True)
+armor_accents = {
+    "leather": (231,207,165,255),
+    "chainmail": (226,231,211,255),
+    "iron": (205,185,143,255),
+    "gold": (255,235,171,255),
+    "diamond": (218,244,224,255),
+    "netherite": (190,169,164,255),
+}
 
+def make_armor_atlas(material, base, light, shade, accent, layer):
+    im = Image.new("RGBA",(64,32),(0,0,0,0))
+    d = ImageDraw.Draw(im)
+    if layer == "1":
+        # Head/helmet and outer helmet UV islands.
+        d.rectangle((0,0,31,15),fill=base)
+        d.rectangle((32,0,63,15),fill=shade)
+        d.rectangle((7,7,24,15),fill=base)
+        d.rectangle((8,8,15,15),fill=light)
+        d.rectangle((16,8,23,15),fill=shade)
+        d.line((8,7,23,7),fill=light)
+        d.line((15,8,15,15),fill=accent)
+        # Torso front panel, shoulder seams, and side plates.
+        d.rectangle((16,16,39,31),fill=base)
+        d.rectangle((20,19,27,29),fill=light)
+        d.rectangle((28,19,35,29),fill=shade)
+        d.line((20,18,35,18),fill=light)
+        d.line((27,20,27,30),fill=accent)
+        d.line((17,17,17,30),fill=shade)
+        d.line((38,17,38,30),fill=light)
+        # Arm and boot islands.
+        d.rectangle((40,16,55,31),fill=shade)
+        d.rectangle((44,19,47,30),fill=base)
+        d.line((44,18,47,18),fill=light)
+        d.rectangle((0,16,15,31),fill=base)
+        d.rectangle((4,20,7,29),fill=shade)
+        d.rectangle((4,28,7,30),fill=accent)
+        d.line((0,19,15,19),fill=light)
+        # Fine pixel rivets.
+        for x,y in ((10,10),(21,10),(24,23),(31,23),(45,23),(6,23),(6,26)):
+            d.point((x,y),fill=accent)
+    else:
+        # Layer 2 is used for leggings; keep only the leg UV island opaque.
+        d.rectangle((0,16,15,31),fill=base)
+        d.rectangle((4,20,7,27),fill=light)
+        d.rectangle((4,25,7,27),fill=shade)
+        d.rectangle((4,28,7,30),fill=accent)
+        d.line((0,19,15,19),fill=light)
+        d.line((8,20,8,29),fill=shade)
+        for x,y in ((5,22),(6,22),(5,26),(6,26)):
+            d.point((x,y),fill=accent)
+    return im
+
+for material,(base,light,shade) in armor_palettes.items():
+    for layer in ("1","2"):
+        make_armor_atlas(material,base,light,shade,armor_accents[material],layer).save(
+            ARMOR_DIR/f"{material}_{layer}.png",optimize=True
+        )
+
+
+# Wolf armor: vanilla 64x64 geometry UV, sage enamel plates and soft brass rivets.
+wolf_armor = Image.new("RGBA",(64,64),(0,0,0,0))
+armor_sage = (111,143,112,255)
+armor_sage_light = (164,187,145,255)
+armor_sage_shade = (75,104,82,255)
+armor_brass = (213,181,111,255)
+draw_uv_box(wolf_armor,(0,0),(6,6,4),armor_sage,armor_sage_light,armor_sage_shade)
+draw_uv_box(wolf_armor,(18,14),(6,9,6),armor_sage,armor_sage_light,armor_sage_shade)
+draw_uv_box(wolf_armor,(21,0),(8,6,7),armor_sage,armor_sage_light,armor_sage_shade)
+draw_uv_box(wolf_armor,(0,18),(2,8,2),armor_sage_shade,armor_sage,armor_sage_shade)
+draw_uv_box(wolf_armor,(52,5),(2,8,2),armor_sage,armor_sage_light,armor_sage_shade)
+wd = ImageDraw.Draw(wolf_armor)
+wd.rectangle((30,8,33,11),fill=armor_brass)
+wd.line((24,23,29,23),fill=armor_brass,width=1)
+wd.point((5,6),fill=armor_brass)
+wd.point((55,9),fill=armor_brass)
+(ENTITY_DIR/"wolf").mkdir(parents=True,exist_ok=True)
+wolf_armor.save(ENTITY_DIR/"wolf"/"wolf_armor.png",optimize=True)
 # Register the generated block and item images in Bedrock atlases.
 terrain = {"resource_pack_name":"Dreamy Survival","texture_name":"atlas.terrain","padding":8,"num_mip_levels":4,"texture_data":{}}
 for p in sorted((OUT/"textures"/"blocks").glob("*.png")):
@@ -334,6 +503,20 @@ def validate_pack():
     for png in png_files:
         with Image.open(png) as image:
             image.verify()
+
+    expected_sizes = {
+        "textures/entity/cow/cow_v2.png": (64, 64),
+        "textures/entity/panda/panda.png": (64, 64),
+        "textures/entity/goat/goat.png": (64, 64),
+        "textures/entity/wolf/wolf_armor.png": (64, 64),
+    }
+    for material in ("leather", "chainmail", "iron", "gold", "diamond", "netherite"):
+        expected_sizes[f"textures/models/armor/{material}_1.png"] = (64, 32)
+        expected_sizes[f"textures/models/armor/{material}_2.png"] = (64, 32)
+    for relative_path, expected_size in expected_sizes.items():
+        with Image.open(OUT / relative_path) as image:
+            if image.size != expected_size:
+                raise ValueError(f"Unexpected texture dimensions for {relative_path}: {image.size}, expected {expected_size}")
 
     with zipfile.ZipFile(archive, "r") as z:
         bad_member = z.testzip()
