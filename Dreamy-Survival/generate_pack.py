@@ -467,7 +467,9 @@ with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as z:
     for p in OUT.rglob("*"):
         if p.is_file():
             z.write(p, p.relative_to(OUT).as_posix())
-print(f"Repacked {archive}; added {len(MOB_PALETTES)} mob texture sheets and {len(armor_palettes)*2} armor atlas images.")
+mob_texture_count = sum(1 for p in ENTITY_DIR.rglob("*.png") if p.name != "wolf_armor.png")
+armor_texture_count = len(list(ARMOR_DIR.glob("*.png"))) + int((ENTITY_DIR / "wolf" / "wolf_armor.png").is_file())
+print(f"Repacked {archive}; {mob_texture_count} mob textures and {armor_texture_count} armor textures are included.")
 
 # Validate the generated pack before publishing the .mcpack artifact.
 def validate_pack():
